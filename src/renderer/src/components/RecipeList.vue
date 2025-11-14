@@ -287,6 +287,7 @@ const formatRecipeAsText = (recipe: Recipe): string => {
 
 .recipes-table th.sortable:hover {
   background: #e9ecef;
+  color: #495057;
 }
 
 .recipes-table th.sorted {
