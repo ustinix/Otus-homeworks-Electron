@@ -24,10 +24,17 @@ export const useRecipesStore = defineStore('recipes', () => {
     }
   }
 
-  const saveRecipe = async (category: string, name: string, content: string): Promise<boolean> => {
+  const saveRecipe = async (
+    category: string,
+    name: string,
+    content: string,
+    image?: string,
+    imageName?: string
+  ): Promise<boolean> => {
     loading.value = true
     try {
-      const result = await window.recipes.saveRecipe({ category, name, content })
+      const recipeData: Recipe = { category, name, content, image, imageName }
+      const result = await window.recipes.saveRecipe(recipeData)
       if (result.success) {
         await loadRecipes()
         return true
@@ -49,7 +56,7 @@ export const useRecipesStore = defineStore('recipes', () => {
     try {
       const result = await window.recipes.deleteRecipe(recipeName)
       if (result.success) {
-        await loadRecipes() // ← теперь это работает!
+        await loadRecipes()
       } else {
         error.value = result.error || 'Ошибка удаления'
       }
@@ -73,7 +80,9 @@ export const useRecipesStore = defineStore('recipes', () => {
           selectedRecipe.value = {
             name: recipeName,
             content: result.content,
-            category: result.category || ''
+            category: result.category || '',
+            image: result.image,
+            imageName: result.imageName
           }
         } else {
           error.value = result.error || 'Не удалось загрузить рецепт'
@@ -82,6 +91,74 @@ export const useRecipesStore = defineStore('recipes', () => {
     } catch (err) {
       error.value = 'Ошибка при загрузке рецепта'
       console.error('Ошибка загрузки рецепта:', err)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateRecipeImage = async (
+    recipeName: string,
+    image: string,
+    imageName: string
+  ): Promise<boolean> => {
+    loading.value = true
+    try {
+      const recipe = recipes.value.find((r) => r.name === recipeName)
+      if (!recipe) {
+        error.value = 'Рецепт не найден'
+        return false
+      }
+
+      const updatedRecipe: Recipe = {
+        ...recipe,
+        image,
+        imageName
+      }
+
+      const result = await window.recipes.saveRecipe(updatedRecipe)
+      if (result.success) {
+        await loadRecipes()
+        return true
+      } else {
+        error.value = result.error || 'Ошибка обновления изображения'
+        return false
+      }
+    } catch (err) {
+      error.value = 'Ошибка при обновлении изображения'
+      console.error('Ошибка обновления изображения:', err)
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const removeRecipeImage = async (recipeName: string): Promise<boolean> => {
+    loading.value = true
+    try {
+      const recipe = recipes.value.find((r) => r.name === recipeName)
+      if (!recipe) {
+        error.value = 'Рецепт не найден'
+        return false
+      }
+
+      const updatedRecipe: Recipe = {
+        ...recipe,
+        image: undefined,
+        imageName: undefined
+      }
+
+      const result = await window.recipes.saveRecipe(updatedRecipe)
+      if (result.success) {
+        await loadRecipes()
+        return true
+      } else {
+        error.value = result.error || 'Ошибка удаления изображения'
+        return false
+      }
+    } catch (err) {
+      error.value = 'Ошибка при удалении изображения'
+      console.error('Ошибка удаления изображения:', err)
+      return false
     } finally {
       loading.value = false
     }
@@ -106,6 +183,8 @@ export const useRecipesStore = defineStore('recipes', () => {
     deleteRecipe,
     viewRecipe,
     clearError,
-    clearSelectedRecipe
+    clearSelectedRecipe,
+    updateRecipeImage,
+    removeRecipeImage
   }
 })

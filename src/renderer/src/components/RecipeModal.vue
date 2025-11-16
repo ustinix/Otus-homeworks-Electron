@@ -23,6 +23,9 @@ const handleClose = (): void => {
           <div class="recipe-meta">
             <span class="recipe-category">{{ recipe.category }}</span>
           </div>
+          <div v-if="recipe.image" class="recipe-image">
+            <img :src="recipe.image" :alt="recipe.name" class="image" />
+          </div>
           <h2 class="recipe-title">{{ recipe.name }}</h2>
         </div>
         <button class="close-btn" @click="handleClose">&times;</button>
@@ -57,7 +60,7 @@ const handleClose = (): void => {
   max-width: 700px;
   width: 90%;
   max-height: 80vh;
-  overflow: hidden;
+  overflow-y: auto;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -74,7 +77,22 @@ const handleClose = (): void => {
   flex: 1;
   margin-right: 15px;
 }
+.recipe-image {
+  flex-shrink: 0;
+}
 
+.image {
+  width: 250px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+}
+.image-name {
+  margin: 5px 0 0 0;
+  font-size: 12px;
+  color: #6c757d;
+}
 .recipe-meta {
   margin-bottom: 8px;
 }

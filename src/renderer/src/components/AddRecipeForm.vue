@@ -21,6 +21,8 @@ const categories = [
 const category = ref('')
 const name = ref('')
 const content = ref('')
+const imageFile = ref<File | null>(null)
+const imagePreview = ref<string | null>(null)
 
 const isFormValid = computed(() => {
   return (
@@ -28,17 +30,77 @@ const isFormValid = computed(() => {
   )
 })
 
-const handleSave = (): void => {
-  if (isFormValid.value) {
-    saveRecipe(category.value, name.value.trim(), content.value.trim())
+const handleImageSelect = (event: Event): void => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (file) {
+    if (!file.type.startsWith('image/')) {
+      alert('Пожалуйста, выберите файл изображения')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Размер файла не должен превышать 5MB')
+      return
+    }
+
+    imageFile.value = file
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      imagePreview.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const removeImage = (): void => {
+  imageFile.value = null
+  imagePreview.value = null
+}
+
+const handleSave = async (): Promise<void> => {
+  if (!isFormValid.value) return
+
+  let imageDataUrl: string | undefined
+  let imageName: string | undefined
+
+  if (imageFile.value) {
+    imageDataUrl = await convertFileToDataURL(imageFile.value)
+    imageName = imageFile.value.name
+  } else {
+    console.log('🖼️ Изображение не выбрано')
+  }
+
+  const success = await saveRecipe(
+    category.value,
+    name.value.trim(),
+    content.value.trim(),
+    imageDataUrl,
+    imageName
+  )
+
+  if (success) {
     clearForm()
   }
+}
+
+const convertFileToDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => resolve(e.target?.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
 }
 
 const clearForm = (): void => {
   name.value = ''
   content.value = ''
   category.value = ''
+  imageFile.value = null
+  imagePreview.value = null
 }
 </script>
 
@@ -60,6 +122,29 @@ const clearForm = (): void => {
         class="input"
         :disabled="loading"
       />
+      <div class="image-upload-section">
+        <label class="label">Изображение рецепта (опционально):</label>
+        <div v-if="!imagePreview" class="image-upload-area">
+          <input
+            type="file"
+            accept="image/*"
+            @change="handleImageSelect"
+            class="image-input"
+            :disabled="loading"
+          />
+          <div class="upload-placeholder">
+            <span>📷 Нажмите для загрузки изображения</span>
+            <small>Поддерживаемые форматы: JPG, PNG, GIF (макс. 5MB)</small>
+          </div>
+        </div>
+
+        <div v-else class="image-preview">
+          <img :src="imagePreview" alt="Превью" class="preview-image" />
+          <button type="button" @click="removeImage" class="btn btn-danger btn-sm">
+            🗑️ Удалить
+          </button>
+        </div>
+      </div>
       <textarea
         v-model="content"
         placeholder="Описание рецепта или ингредиенты..."
@@ -127,6 +212,58 @@ const clearForm = (): void => {
 .textarea {
   resize: vertical;
   min-height: 120px;
+}
+
+.image-upload-section {
+  border: 2px dashed #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  transition: border-color 0.2s;
+}
+
+.image-upload-section:hover {
+  border-color: #007acc;
+}
+
+.image-upload-area {
+  position: relative;
+  text-align: center;
+}
+
+.image-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-placeholder {
+  padding: 20px;
+  color: #6c757d;
+}
+
+.upload-placeholder span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.upload-placeholder small {
+  color: #adb5bd;
+}
+
+.image-preview {
+  text-align: center;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
 .btn {

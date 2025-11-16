@@ -33,7 +33,7 @@ function createWindow(): void {
   }
 }
 
-ipcMain.handle('save-recipe', async (_, { category, name, content }) => {
+ipcMain.handle('save-recipe', async (_, { category, name, content, image, imageName }) => {
   try {
     await fs.promises.mkdir(recipesDir, { recursive: true })
     const fileName = name.replace(/[^a-z0-9а-яё]/gi, '_').toLowerCase() + '.json'
@@ -43,6 +43,8 @@ ipcMain.handle('save-recipe', async (_, { category, name, content }) => {
       category,
       name,
       content,
+      image,
+      imageName,
       createdAt: new Date().toISOString()
     }
 
@@ -55,12 +57,16 @@ ipcMain.handle('save-recipe', async (_, { category, name, content }) => {
 })
 ipcMain.handle('get-recipes', async () => {
   try {
-    console.log('🔄 main: get-recipes called')
     await fs.promises.mkdir(recipesDir, { recursive: true })
     const files = await fs.promises.readdir(recipesDir)
-    console.log('📁 main: found files:', files)
 
-    const recipes: Array<{ name: string; category: string; content: string }> = []
+    const recipes: Array<{
+      name: string
+      category: string
+      content: string
+      image?: string
+      imageName?: string
+    }> = []
 
     for (const file of files) {
       if (file.endsWith('.json')) {
@@ -68,20 +74,19 @@ ipcMain.handle('get-recipes', async () => {
           const filePath = join(recipesDir, file)
           const content = await fs.promises.readFile(filePath, 'utf8')
           const recipeData = JSON.parse(content)
-          console.log('📄 main: loaded recipe:', recipeData.name)
 
           recipes.push({
             name: recipeData.name,
             category: recipeData.category,
-            content: recipeData.content
+            content: recipeData.content,
+            image: recipeData.image,
+            imageName: recipeData.imageName
           })
         } catch (err) {
           console.error(`❌ main: error reading file ${file}:`, err)
         }
       }
     }
-
-    console.log('✅ main: get-recipes returning:', recipes.length, 'recipes')
     return recipes
   } catch (error) {
     console.error('❌ main: get-recipes error:', error)
@@ -98,7 +103,9 @@ ipcMain.handle('get-recipe-content', async (_, recipeName) => {
     return {
       success: true,
       content: recipe.content,
-      category: recipe.category
+      category: recipe.category,
+      image: recipe.image,
+      imageName: recipe.imageName
     }
   } catch (error) {
     console.error('Ошибка чтения рецепта:', error)
