@@ -123,7 +123,7 @@ const clearForm = (): void => {
         :disabled="loading"
       />
       <div class="image-upload-section">
-        <label class="label">Изображение рецепта (опционально):</label>
+        <label class="label">Изображение рецепта:</label>
         <div v-if="!imagePreview" class="image-upload-area">
           <input
             type="file"
@@ -133,16 +133,14 @@ const clearForm = (): void => {
             :disabled="loading"
           />
           <div class="upload-placeholder">
-            <span>📷 Нажмите для загрузки изображения</span>
+            <span>Нажмите для загрузки изображения</span>
             <small>Поддерживаемые форматы: JPG, PNG, GIF (макс. 5MB)</small>
           </div>
         </div>
 
         <div v-else class="image-preview">
           <img :src="imagePreview" alt="Превью" class="preview-image" />
-          <button type="button" @click="removeImage" class="btn btn-danger btn-sm">
-            🗑️ Удалить
-          </button>
+          <button type="button" @click="removeImage" class="btn btn-danger btn-sm">Удалить</button>
         </div>
       </div>
       <textarea
@@ -215,14 +213,13 @@ const clearForm = (): void => {
 }
 
 .image-upload-section {
-  border: 2px dashed #e9ecef;
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+  border: 2px solid #e9ecef;
   border-radius: 8px;
   padding: 15px;
   transition: border-color 0.2s;
-}
-
-.image-upload-section:hover {
-  border-color: #007acc;
 }
 
 .image-upload-area {
@@ -256,6 +253,9 @@ const clearForm = (): void => {
 }
 
 .image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 
