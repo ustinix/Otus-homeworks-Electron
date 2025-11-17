@@ -117,7 +117,7 @@ ipcMain.handle('delete-recipe', async (_, recipeName) => {
   try {
     const fileName = recipeName.replace(/[^a-z0-9а-яё]/gi, '_').toLowerCase() + '.json'
     const filePath = join(recipesDir, fileName)
-    await fs.promises.unlink(filePath)
+    await fs.promises.rm(filePath, { force: true })
     return { success: true }
   } catch (error) {
     console.error('Ошибка удаления рецепта:', error)
